@@ -1,0 +1,62 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: lunarcore-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  lunarcore:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        LUNARCORE_REPO: ${LUNARCORE_REPO:-https://github.com/Melledy/LunarCore.git}
+        LUNARCORE_BRANCH: ${LUNARCORE_BRANCH:-lite}
+        RESOURCE_REPO: ${RESOURCE_REPO:-https://gitlab.com/Dimbreath/turnbasedgamedata.git}
+        RESOURCE_BRANCH: ${RESOURCE_BRANCH:-main}
+        GENERATE_PROTO: ${GENERATE_PROTO:-false}
+    image: lunarcore:latest
+    container_name: lunarcore
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    # Keep stdin open and allocate a pseudo-TTY for LunarCore's interactive JLine console
+    # Attach anytime with: docker attach lunarcore (detach with Ctrl+P, Ctrl+Q)
+    stdin_open: true
+    tty: true
+    environment:
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017}
+      DB_COLLECTION: ${DB_COLLECTION:-lunarcore}
+      USE_INTERNAL_MONGO: ${USE_INTERNAL_MONGO:-false}
+      PUBLIC_HOST: ${PUBLIC_HOST:-127.0.0.1}
+      HTTP_BIND_ADDRESS: ${HTTP_BIND_ADDRESS:-0.0.0.0}
+      HTTP_PORT: ${HTTP_PORT:-80}
+      HTTP_PUBLIC_ADDRESS: ${HTTP_PUBLIC_ADDRESS:-127.0.0.1}
+      HTTP_PUBLIC_PORT: ${HTTP_PUBLIC_PORT:-}
+      HTTP_USE_SSL: ${HTTP_USE_SSL:-false}
+      GAME_BIND_ADDRESS: ${GAME_BIND_ADDRESS:-0.0.0.0}
+      GAME_PORT: ${GAME_PORT:-23301}
+      GAME_PUBLIC_ADDRESS: ${GAME_PUBLIC_ADDRESS:-127.0.0.1}
+      GAME_PUBLIC_PORT: ${GAME_PUBLIC_PORT:-}
+      AUTO_CREATE_ACCOUNT: ${AUTO_CREATE_ACCOUNT:-true}
+      SERVER_LANGUAGE: ${SERVER_LANGUAGE:-EN}
+      JAVA_OPTS: ${JAVA_OPTS:--Xms1G -Xmx4G}
+    ports:
+      - "${HTTP_HOST_PORT:-80}:${HTTP_PORT:-80}/tcp"
+      - "${GAME_HOST_PORT:-23301}:${GAME_PORT:-23301}/udp"
+    volumes:
+      - ./plugins:/opt/lunarcore/plugins
+      - ./logs:/opt/lunarcore/logs
+      - lunarcore_data:/opt/lunarcore/data
+
+volumes:
+  mongo_data:
+  lunarcore_data:

@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+logs/
+plugins/
+config.json
+hotfix.json
+*.mv
+*.log
+Lunar Core Handbook.txt
