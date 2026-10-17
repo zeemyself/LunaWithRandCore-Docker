@@ -66,9 +66,19 @@ if [ ! -s "${CONFIG_FILE}" ]; then
     "maxPlayers": -1
   },
   "resourceDir": "./resources",
-  "dataDir": "./data"
+  "dataDir": "./data",
+  "clientDataDir": ""
 }
 EOF
+fi
+
+# Auto-detect mounted client design data directory if not explicitly provided
+CLIENT_DATA_DIR_EFFECTIVE="${CLIENT_DATA_DIR:-}"
+if [ -z "${CLIENT_DATA_DIR_EFFECTIVE}" ]; then
+    if [ -d "/opt/lunarcore/client_data/Persistent" ] || [ -d "/opt/lunarcore/client_data/StreamingAssets" ]; then
+        CLIENT_DATA_DIR_EFFECTIVE="/opt/lunarcore/client_data"
+        echo "[entrypoint] Auto-detected client design data at ${CLIENT_DATA_DIR_EFFECTIVE}"
+    fi
 fi
 
 # Apply environment variable overrides to config.json using jq
@@ -99,6 +109,7 @@ if [ "${SKIP_CONFIG_SYNC:-false}" != "true" ]; then
         --argjson game_pub_port "${GAME_PUB_PORT_JSON}" \
         --argjson auto_account "${AUTO_CREATE_ACCOUNT:-true}" \
         --arg language "${SERVER_LANGUAGE:-EN}" \
+        --arg client_data_dir "${CLIENT_DATA_DIR_EFFECTIVE}" \
         '
         .accountDatabase.uri = $mongo_uri |
         .accountDatabase.collection = $db_collection |
@@ -116,7 +127,8 @@ if [ "${SKIP_CONFIG_SYNC:-false}" != "true" ]; then
         .gameServer.publicAddress = $game_pub_addr |
         .gameServer.publicPort = $game_pub_port |
         .serverOptions.autoCreateAccount = $auto_account |
-        .serverOptions.language = $language
+        .serverOptions.language = $language |
+        .clientDataDir = (if $client_data_dir != "" then $client_data_dir else (.clientDataDir // "") end)
         ' "${CONFIG_FILE}" > "${TMP_CONFIG}" && mv "${TMP_CONFIG}" "${CONFIG_FILE}"
 fi
 

@@ -3,3 +3,5 @@
 logs/
 plugins/
 Lunar Core Handbook.txt
+client_data/*
+!client_data/.gitkeep

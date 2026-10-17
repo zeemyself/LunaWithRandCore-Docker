@@ -17,8 +17,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        LUNARCORE_REPO: ${LUNARCORE_REPO:-https://github.com/Melledy/LunarCore.git}
-        LUNARCORE_BRANCH: ${LUNARCORE_BRANCH:-lite}
+        LUNARCORE_REPO: ${LUNARCORE_REPO:-https://github.com/KuraXR/LunarCore-4.6.git}
+        LUNARCORE_BRANCH: ${LUNARCORE_BRANCH:-main}
         RESOURCE_REPO: ${RESOURCE_REPO:-https://gitlab.com/Dimbreath/turnbasedgamedata.git}
         RESOURCE_BRANCH: ${RESOURCE_BRANCH:-main}
         GENERATE_PROTO: ${GENERATE_PROTO:-false}
@@ -33,6 +33,7 @@ services:
     stdin_open: true
     tty: true
     environment:
+      CLIENT_DATA_DIR: ${CLIENT_DATA_DIR:-}
       MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017}
       DB_COLLECTION: ${DB_COLLECTION:-lunarcore}
       USE_INTERNAL_MONGO: ${USE_INTERNAL_MONGO:-false}
@@ -56,6 +57,7 @@ services:
       - ./plugins:/opt/lunarcore/plugins
       - ./logs:/opt/lunarcore/logs
       - lunarcore_data:/opt/lunarcore/data
+      - ${CLIENT_DATA_PATH:-./client_data}:/opt/lunarcore/client_data:ro
 
 volumes:
   mongo_data:

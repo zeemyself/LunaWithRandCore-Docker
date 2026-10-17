@@ -5,8 +5,8 @@
 # ==============================================================================
 FROM eclipse-temurin:21-jdk-noble AS builder
 
-ARG LUNARCORE_REPO=https://github.com/Melledy/LunarCore.git
-ARG LUNARCORE_BRANCH=lite
+ARG LUNARCORE_REPO=https://github.com/KuraXR/LunarCore-4.6.git
+ARG LUNARCORE_BRANCH=main
 ARG GENERATE_PROTO=false
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -61,8 +61,8 @@ COPY --from=resources /resources/Config /opt/lunarcore/resources/Config
 COPY --from=resources /resources/ExcelOutput /opt/lunarcore/resources/ExcelOutput
 COPY --from=resources /resources/TextMap /opt/lunarcore/resources/TextMap
 
-# Create directories for plugins and logs
-RUN mkdir -p /opt/lunarcore/plugins /opt/lunarcore/logs
+# Create directories for plugins, logs, and optional client design data
+RUN mkdir -p /opt/lunarcore/plugins /opt/lunarcore/logs /opt/lunarcore/client_data
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
@@ -72,6 +72,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENV MONGO_URI="mongodb://mongo:27017" \
     DB_COLLECTION="lunarcore" \
     USE_INTERNAL_MONGO="false" \
+    CLIENT_DATA_DIR="" \
     HTTP_BIND_ADDRESS="0.0.0.0" \
     HTTP_PORT="80" \
     HTTP_PUBLIC_ADDRESS="127.0.0.1" \
